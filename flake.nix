@@ -1,5 +1,5 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
   outputs = { self, nixpkgs }: {
     overlays = {
       xlnx2025_1 = import ./overlay.nix { xlnxVersion = "2025.1"; };
