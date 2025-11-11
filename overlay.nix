@@ -4,6 +4,10 @@
     zynqmp-fsbl zynqmp-pmufw zynq-fsbl;
   ubootZynqMP = prev.callPackage ./pkgs/u-boot-xlnx.nix { inherit xlnxVersion; platform = "zynqmp"; };
   ubootZynq = prev.callPackage ./pkgs/u-boot-xlnx.nix { inherit xlnxVersion; platform = "zynq"; };
+  
+  # SPL-enabled variants
+  ubootZynqMP-spl = prev.callPackage ./pkgs/u-boot-xlnx.nix { inherit xlnxVersion; platform = "zynqmp"; enableSPL = true; };
+  ubootZynq-spl = prev.callPackage ./pkgs/u-boot-xlnx.nix { inherit xlnxVersion; platform = "zynq"; enableSPL = true; };
   armTrustedFirmwareZynqMP = prev.callPackage ./pkgs/arm-trusted-firmware-xlnx.nix { inherit xlnxVersion; };
   linux_zynqmp = prev.callPackage ./pkgs/linux-xlnx { inherit xlnxVersion; defconfig = "xilinx_defconfig"; kernelPatches = [ ]; };
   linux_zynq = prev.callPackage ./pkgs/linux-xlnx { inherit xlnxVersion; defconfig = "xilinx_zynq_defconfig"; kernelPatches = [ ]; };

@@ -91,11 +91,26 @@ in
       '';
     };
 
+    enableSPL = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = lib.mdDoc ''
+        Enable U-Boot SPL (Secondary Program Loader) for improved boot flexibility.
+        When enabled, uses boot.bin from SPL and u-boot.img instead of u-boot.elf.
+        Note: SPL is primarily supported on Zynq 7000 platform.
+      '';
+    };
+
     boot-bin = lib.mkOption {
       type = lib.types.path;
       defaultText = "generated from fsbl, pmufw, bitstream, and dtb";
       default = let
         dtb = "${config.hardware.deviceTree.package}/system.dtb";
+        ubootPkg = if cfg.enableSPL then
+          (if cfg.platform == "zynqmp" then pkgs.ubootZynqMP-spl else pkgs.ubootZynq-spl)
+        else
+          (if cfg.platform == "zynqmp" then pkgs.ubootZynqMP else pkgs.ubootZynq);
+        ubootFile = if cfg.enableSPL then "${ubootPkg}/u-boot.img" else "${ubootPkg}/u-boot.elf";
         bif = {
           zynqmp = ''
             the_ROM_image: {
@@ -104,14 +119,19 @@ in
               [destination_device=pl] ${cfg.bitstream}
               [destination_cpu=a53-0, exception_level=el-3, trustzone] ${pkgs.armTrustedFirmwareZynqMP}/bl31.elf
               [destination_cpu=a53-0, load=0x00100000] ${dtb}
-              [destination_cpu=a53-0, exception_level=el-2] ${pkgs.ubootZynqMP}/u-boot.elf
+              [destination_cpu=a53-0, exception_level=el-2] ${ubootFile}
             }
           '';
-          zynq = ''
+          zynq = if cfg.enableSPL then ''
+            the_ROM_image: {
+              ${ubootPkg}/spl/boot.bin
+              [load=0x00100000] ${dtb}
+            }
+          '' else ''
             the_ROM_image: {
               [bootloader] ${cfg.fsbl}
               ${cfg.bitstream}
-              ${pkgs.ubootZynq}/u-boot.elf
+              ${ubootFile}
               [load=0x00100000] ${dtb}
             }
           '';
@@ -131,6 +151,10 @@ in
       {
         assertion = cfg.platform == "zynqmp" -> cfg.pmufw != null;
         message = "hardware.zynq.pmufw is not optional on ZynqMP.";
+      }
+      {
+        assertion = cfg.enableSPL -> cfg.platform == "zynq";
+        message = "U-Boot SPL is primarily designed for Zynq 7000 platform. For ZynqMP, consider using the standard u-boot.elf approach.";
       }
     ];
   };

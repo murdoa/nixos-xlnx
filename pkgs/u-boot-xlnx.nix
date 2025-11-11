@@ -2,6 +2,8 @@
 , buildUBoot
 , platform ? "zynqmp"
 , xlnxVersion ? "2025.1"
+, enableSPL ? false
+, deviceTree ? null
 }:
 
 let
@@ -30,5 +32,13 @@ buildUBoot {
   defconfig = "xilinx_${platform}_virt_defconfig";
   extraMeta.platforms = if platform == "zynq" then [ "armv7l-linux" ] else [ "aarch64-linux" ];
 
-  filesToInstall = [ "u-boot.elf" ];
+  # Add device tree override if specified for SPL builds
+  extraConfig = if enableSPL && deviceTree != null then ''
+    CONFIG_DEFAULT_DEVICE_TREE="${deviceTree}"
+  '' else "";
+
+  filesToInstall = [ "u-boot.elf" ] ++ (if enableSPL then [
+    "spl/boot.bin"
+    "u-boot.img"
+  ] else []);
 }
