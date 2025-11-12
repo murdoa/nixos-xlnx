@@ -24,10 +24,21 @@
     environment.systemPackages = [
       (pkgs.writeShellApplication {
         name = "xlnx-firmware-update";
-        text = ''
+        text = let
+          ubootPkg = if config.hardware.zynq.enableSPL then
+            (if config.hardware.zynq.platform == "zynqmp" then pkgs.ubootZynqMP-spl else pkgs.ubootZynq-spl)
+          else
+            (if config.hardware.zynq.platform == "zynqmp" then pkgs.ubootZynqMP else pkgs.ubootZynq);
+        in ''
           systemctl start boot-firmware.mount
           cp ${config.hardware.zynq.boot-bin} /boot/firmware/BOOT.BIN
+          ${lib.optionalString config.hardware.zynq.enableSPL ''
+            cp ${ubootPkg}/u-boot.img /boot/firmware/u-boot.img
+          ''}
           sync /boot/firmware/BOOT.BIN
+          ${lib.optionalString config.hardware.zynq.enableSPL ''
+            sync /boot/firmware/u-boot.img
+          ''}
         '';
       })
     ];
