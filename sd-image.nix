@@ -40,7 +40,8 @@
         text = ''
           systemctl start boot-firmware.mount
           cp ${config.hardware.zynq.boot-bin} /boot/firmware/BOOT.BIN
-          sync /boot/firmware/BOOT.BIN
+          sync
+          sleep 1
         '';
       })
     ];
